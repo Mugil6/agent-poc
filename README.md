@@ -1,6 +1,6 @@
 # 📄 AI ACORD Underwriting Extractor (Agentic PoC)
 
-An enterprise-grade Proof of Concept (PoC) demonstrating agentic ingestion and structured data extraction from complex, tabular ACORD insurance documents using multimodal Large Language Models (LLMs).
+An enterprise-grade Proof of Concept (PoC) demonstrating agentic ingestion and structured data extraction from complex, tabular ACORD insurance documents using multimodal Large Language Models (LLMs). Access the app here - https://agent-poc-wpuhau5hlgpqlus8qyv5jq.streamlit.app/
 
 ## 🎯 Architecture Overview
 
@@ -28,8 +28,8 @@ cd agent-poc
 
 pip install -r requirements.txt
 
-### 3. Run the application 
 
+### 3. Run the application
 python -m streamlit run app.py
 
 
