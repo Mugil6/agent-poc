@@ -1,35 +1,63 @@
-# 📄 AI ACORD Underwriting Extractor (Agentic PoC)
+# 🛡️ Agentic AI: Intelligent Intake & Orchestration Portal (PoC)
 
-An enterprise-grade Proof of Concept (PoC) demonstrating agentic ingestion and structured data extraction from complex, tabular ACORD insurance documents using multimodal Large Language Models (LLMs). Access the app here - https://agent-poc-wpuhau5hlgpqlus8qyv5jq.streamlit.app/
+This repository contains a Proof of Concept (PoC) for an **Enterprise Multi-Agent Orchestration Pipeline**. It is designed to automate the classification and extraction of complex, highly-structured and unstructured business documents.
 
-## 🎯 Architecture Overview
+Built with **Streamlit's Multipage Architecture**, **Pydantic**, and the **Native Gemini API**, this application demonstrates how multimodal Large Language Models (LLMs) can act as deterministic reasoning nodes to parse spatial document layouts and classify business intent.
 
-This repository houses the rapid-prototyping architecture for the Underwriting Extraction Agent. 
-* **Current State (PoC):** Built using Streamlit and Google's Gemini 2.5 Flash API to demonstrate immediate capability, multimodal vision parsing, and strict JSON schema enforcement (via Pydantic) without requiring local AWS infrastructure.
-* **Target State (Production):** The core extraction logic and Pydantic schemas are designed to be entirely decoupled from the UI. For production deployment, this logic will be migrated to the **AWS AgentCore** framework and executed via **Amazon Bedrock** to ensure strict VPC isolation, zero data retention, and enterprise compliance.
+## 🏗️ Architecture: PoC vs. Production
 
-## ✨ Features
-* **Multimodal Vision Parsing:** Bypasses traditional OCR by using native vision-language models to understand spatial layouts, grids, and nested tables in ACORD documents.
-* **Strict Schema Enforcement:** Utilizes `Pydantic` to guarantee that the LLM outputs exact, strongly-typed JSON relationships mapping Policies, Limits, and Carriers.
-* **Dynamic Error Handling:** Intelligent prompt engineering instructs the agent to flag unreadable or missing fields explicitly, preventing silent hallucinations.
+This repository serves as **Phase 1 (Local/Cloud Demo)** to validate agentic reasoning and data extraction capabilities without requiring enterprise infrastructure overhead.
 
-## 🚀 Local Development Setup
+* **Phase 1 (Current PoC):** Utilizes `google.generativeai` (Gemini 2.5 Flash open weights) and Streamlit Community Cloud. This allows stakeholders to immediately interact with the UI, test sample documents, and validate extraction accuracy.
+* **Phase 2 (Target Enterprise Architecture):** The extraction logic, prompt engineering, and Pydantic schemas built here are highly modular. Upon securing cloud provisioning, these Streamlit pages will be decoupled, wrapped in scalable agent SDKs (such as AWS AgentCore or similar frameworks), and deployed as isolated functions within a secure VPC for production processing.
 
-Follow these steps to run the agent locally on your machine.
+## 🧠 The Agent Nodes
 
-### 1. Prerequisites
-Ensure you have Python 3.9+ installed on your system.
+This portal is structured as a Microservices Architecture. Each "Page" represents a distinct, isolated AI Agent with a specific operational capability:
 
-### 2. Install Dependencies
-Clone this repository and install the required Python packages:
-```bash
+1. **🔍 Node 1: Structured Data Extractor**
+   * **Function:** Navigates complex grid layouts and tabular formats inherent to standardized industry forms.
+   * **Mechanism:** Enforces strict `Pydantic` schemas to force the LLM to output highly nested, deterministic JSON (mapping entity details, identification codes, and quantitative metrics) rather than conversational text.
+2. **🏢 Node 2: Business Intent Classifier**
+   * **Function:** Analyzes the visual and contextual intent of an inbound document payload.
+   * **Mechanism:** Dynamically routes the payload into distinct operational queues by classifying it as a **Bulk/Batch Submission** (e.g., multi-row schedule spreadsheets) or a **Standard Processing Submission** (e.g., single-entity application forms).
+
+## 📂 Repository Structure
+
+The application utilizes Streamlit's native Multipage directory routing:
+
+```text
+agent-poc/
+├── app.py                            # Gateway Dashboard (Home Page)
+├── pages/
+│   ├── 1_🔍_Structured_Extractor.py  # Agent Node 1: Extraction Logic
+│   └── 2_🏢_Intent_Classifier.py     # Agent Node 2: Business Routing Logic
+├── .streamlit/
+│   └── secrets.toml                  # (Local only) Stores GEMINI_API_KEY
+├── .gitignore                        # Excludes secrets from version control
+└── requirements.txt                  # Dependency manifest for deployment
+
+Local Development Setup
+
+To run this application on your local machine for testing:
+
+1. Clone the repository:
 git clone [https://github.com/Mugil6/agent-poc.git](https://github.com/Mugil6/agent-poc.git)
+
 cd agent-poc
 
+2. Install dependencies:
 pip install -r requirements.txt
 
+3. Configure your API Key:
+Create a folder named .streamlit in the root directory, and inside it, create a file named secrets.toml.
 
-### 3. Run the application
+4. Run the Master Application:
+
 python -m streamlit run app.py
+
+
+
+
 
 
