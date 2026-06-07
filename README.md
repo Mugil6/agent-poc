@@ -1,90 +1,52 @@
-# 🛡️ Agentic AI: Intelligent Intake & Orchestration Portal (PoC)
+# 🛡️ Agentic AI: P&C Underwriting Operating System (PoC)
 
-This repository contains a Proof of Concept (PoC) for an **Enterprise Multi-Agent Orchestration Pipeline**. It is designed to automate the ingestion, structural extraction, intent classification, and system-of-record synthesis for complex business documents.
+This repository contains a Proof of Concept (PoC) for an **Enterprise Multi-Agent Underwriting Pipeline**. It automates the entire lifecycle from document ingestion and triage to risk assessment, premium rating, and broker dispatch.
 
-Built with **Streamlit's Multipage Architecture**, **Pydantic**, and the **Native Gemini API**, this application demonstrates how multimodal Large Language Models (LLMs) can act as deterministic reasoning nodes, moving beyond text generation to execute stateful business workflows.
+Built with **Streamlit** and the **Native Gemini API**, this application demonstrates a decoupled micro-agent architecture. By separating tasks into standalone nodes passing data via global memory, it ensures modularity, fault tolerance, and enterprise-grade scalability.
 
-## 🏗️ Architecture: PoC vs. Production
+## 🏗️ The 3-Stage Pipeline (10 Agent Nodes)
 
-This repository serves as **Phase 1 (Local/Cloud Demo)** to validate agentic reasoning and data extraction capabilities without requiring enterprise infrastructure overhead.
+### Stage 1: Intake & Triage
+1. **🔍 Node 1: Extractor:** Parses complex grids/tables into structured DataFrames.
+2. **🏢 Node 2: Classifier:** Analyzes visual structure to determine business intent (e.g., Bookroll vs. New Business).
+3. **📝 Node 3: Case Creator:** Synthesizes outputs into a clean CRM ticket.
+4. **📧 Node 4: Exception Agent:** Automatically drafts broker emails to request missing data.
 
-* **Phase 1 (Current PoC):** Utilizes `google.generativeai` (Gemini 2.5 Flash open weights) and Streamlit Community Cloud. This allows stakeholders to interact with the UI, test sample documents, and validate end-to-end extraction and routing accuracy.
-* **Phase 2 (Target Enterprise Architecture):** The logic, prompt engineering, and strict Pydantic schemas built here are highly modular. Upon securing cloud provisioning, these Streamlit pages will be decoupled, wrapped in scalable agent SDKs (such as AWS AgentCore or similar frameworks), and deployed as isolated serverless functions within a secure VPC.
+### Stage 2: Quote & Assess
+5. **🌐 Node 5: Enrichment:** Fetches external geographical and compliance risk data.
+6. **🧮 Node 6: Rating:** Calculates premium based on hazard multipliers.
+7. **⚖️ Node 7: Summarization:** Provides an executive summary for human underwriting decision support.
+8. **📄 Node 8: Quote Prep:** Drafts the formal quote document and subjectivities.
 
-## 🧠 The Agent Nodes
-
-This portal is structured as a Microservices Architecture. Each "Page" represents a distinct AI Agent with a specific operational capability:
-
-1. **🔍 Node 1: Structured Data Extractor (The Data Specialist)**
-   * **Function:** Navigates complex grid layouts and tabular formats inherent to standardized industry forms.
-   * **Mechanism:** Enforces strict `Pydantic` schemas to force the LLM to output highly nested, deterministic JSON (mapping entity details, identification codes, and quantitative metrics).
-2. **🏢 Node 2: Business Intent Classifier (The Business Analyst)**
-   * **Function:** Analyzes the visual and contextual intent of an inbound document payload.
-   * **Mechanism:** Dynamically classifies the payload into distinct operational pathways (e.g., distinguishing between a **Bulk/Batch Submission** versus a **Standard Single-Entity Submission**).
-3. **📝 Node 3: Case Creation Agent (The System Integrator)**
-   * **Function:** Acts as the final workflow orchestrator and "Human-in-the-loop" safeguard.
-   * **Mechanism:** Takes the output from Node 1 and Node 2, assesses data completeness, determines SLA priority, and generates a formatted JSON API payload ready for downstream CRM/ERP injection. It automatically flags missing structural anomalies (e.g., missing identification codes) and routes incomplete cases to an Exceptions Desk.
+### Stage 3: Negotiate & Bind
+9. **📈 Node 9: Cross-Sell:** Runs predictive models to suggest logical upsell products.
+10. **✉️ Node 10: Issuance:** Synthesizes the quote and upsell opportunities into a final dispatch communication.
 
 ## 📂 Repository Structure
-
-The application utilizes Streamlit's native Multipage directory routing:
-
 ```text
 agent-poc/
-├── app.py                            # Gateway Dashboard (Home Page)
+├── app.py                              # Global Upload & Master Orchestrator
 ├── pages/
-│   ├── 1_🔍_Structured_Extractor.py  # Agent Node 1: Extraction Logic
-│   ├── 2_🏢_Intent_Classifier.py     # Agent Node 2: Business Routing Logic
-│   └── 3_📝_Case_Creator.py          # Agent Node 3: End-to-End Orchestration
+│   ├── 1_🔍_Structured_Extractor.py    
+│   ├── 2_🏢_Intent_Classifier.py       
+│   ├── 3_📝_Case_Creator.py            
+│   ├── 4_📧_Exception_Communicator.py  
+│   ├── 5_🌐_Enrichment_Agent.py        
+│   ├── 6_🧮_Rating_Agent.py            
+│   ├── 7_⚖️_Summarization_Agent.py     
+│   ├── 8_📄_Quote_Prep_Agent.py        
+│   ├── 9_📈_Cross_Sell_Agent.py        
+│   └── 10_✉️_Issuance_Agent.py         
 ├── .streamlit/
-│   └── secrets.toml                  # (Local only) Stores GEMINI_API_KEY
-├── .gitignore                        # Excludes secrets from version control
-└── requirements.txt                  # Dependency manifest for deployment
+│   └── secrets.toml                  # Stores GEMINI_API_KEY
+└── requirements.txt                  # Dependency manifest
 
+ Local Development
 
-Local Development Setup
+    Clone the repository and pip install -r requirements.txt.
 
-To run this application on your local machine for testing:
+    Configure .streamlit/secrets.toml with your API Key.
 
-1. Clone the repository:
+    Run python -m streamlit run app.py. Upload a document to the Global Memory bank to execute the pipeline.
 
-git clone [https://github.com/Mugil6/agent-poc.git](https://github.com/Mugil6/agent-poc.git)
-cd agent-poc
-
-2. Install dependencies:
-
-pip install -r requirements.txt
-
-
-3. Run the Master Application:
-Execute the root file. Streamlit will automatically detect the pages/ folder and build the sidebar navigation.
-Bash
-
-python -m streamlit run app.py
-
-☁️ Deployment (Streamlit Community Cloud)
-
-To deploy this unified portal for a live demonstration:
-
-    Ensure your .streamlit/secrets.toml file is not pushed to GitHub (check your .gitignore).
-
-    Log into Streamlit Community Cloud using your GitHub account.
-
-    Click New app and select your repository.
-
-    Set the Main file path to app.py.
-
-    Click Advanced Settings -> Secrets and paste your API key exactly as it appears locally:
-    Ini, TOML
-
-    GEMINI_API_KEY="your-api-key-here"
-
-    Click Deploy.
-
-⚠️ Compliance & Security Warning
-
-This PoC currently routes data through public LLM endpoints for rapid prototyping and demonstration purposes. Do not upload documents containing real Personally Identifiable Information (PII) or sensitive organizational data to this portal. Please use publicly available, sanitized, or dummy documents for all testing and demonstrations until a secure cloud infrastructure is fully implemented.
-
-
-
-Copyright (c) 2026 [Mugilan]. All Rights Reserved.
+   Copyright (c) 2026 [Mugilan]. All Rights Reserved.

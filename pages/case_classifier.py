@@ -1,128 +1,57 @@
 import streamlit as st
-import os
 from typing import Literal
 from pydantic import BaseModel, Field
 import google.generativeai as genai
 
-# =====================================================================
-# 1. UI CONFIGURATION
-# =====================================================================
-st.set_page_config(page_title="Case Classifier", layout="wide")
-st.title("🏢 P&C Case Classification Agent")
-st.markdown("### Multi-Agent Pipeline: Node 2 (Business Logic)")
+st.set_page_config(page_title="Intent Classifier", layout="wide")
+st.title("🏢 Business Intent Classifier")
+st.markdown("### Workflow 1: Intake & Triage (Node 2)")
 
-# =====================================================================
-# 2. SECURE API KEY HANDLING
-# =====================================================================
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-    os.environ["GEMINI_API_KEY"] = api_key
-    genai.configure(api_key=api_key)
-except KeyError:
-    st.error("⚠️ **Setup Error:** GEMINI_API_KEY not found in secrets.")
-    st.stop()
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# =====================================================================
-# 3. SCHEMA DEFINITION (Bookroll vs. New Business)
-# =====================================================================
-CaseType = Literal[
-    "BOOKROLL", 
-    "NEW_BUSINESS", 
-    "ESCALATE_TO_HUMAN"
-]
+CaseType = Literal["BOOKROLL", "NEW_BUSINESS", "ESCALATE_TO_HUMAN"]
 
 class CaseClassification(BaseModel):
-    case_type: CaseType = Field(description="Classify as BOOKROLL (bulk transfer of policies) or NEW_BUSINESS (single/few new policies).")
-    confidence_score: int = Field(description="Confidence score of the classification from 1 to 100.")
-    detected_policy_count: str = Field(description="Estimated number of policies or accounts visible in the document. Output 'UNKNOWN' if unclear.")
-    key_indicators: str = Field(description="List the visual key phrases or data points that led to this decision (e.g., 'table with 50 rows', 'single applicant name').")
-    reasoning: str = Field(description="A brief 1-2 sentence explanation of the classification based on the image.")
+    case_type: CaseType = Field(description="Classify as BOOKROLL or NEW_BUSINESS.")
+    confidence_score: int = Field(description="Confidence score (1-100).")
+    detected_policy_count: str = Field(description="Estimated number of policies.")
+    key_indicators: str = Field(description="Specific visual data points that led to this decision.")
+    detailed_reasoning: str = Field(description="A thorough, step-by-step explanation of the visual and structural clues used to determine the intent.")
 
-# =====================================================================
-# 4. INITIALIZE THE CASE CLASSIFICATION MODEL
-# =====================================================================
-@st.cache_resource
-def get_case_agent():
-    return genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=(
-            "You are an elite P&C Insurance Underwriting Agent. Your job is to visually analyze the uploaded document image "
-            "and classify the business intent. "
-            "A 'Bookroll' involves an agency moving a large portfolio/book of existing policies. Visually, this usually looks like "
-            "a spreadsheet, a schedule of vehicles/properties with dozens of rows, or bulk loss runs. "
-            "'New Business' is typically a single application (like an ACORD 125/130) for one specific insured entity. "
-            "If the document is too blurry or ambiguous to tell, choose 'ESCALATE_TO_HUMAN'."
-        )
-    )
-
-model = get_case_agent()
-
-# =====================================================================
-# 5. USER INTERFACE
-# =====================================================================
-st.sidebar.info(
-    "💡 **Pipeline Context:** This agent determines the business workflow based on document structure. "
-    "Spreadsheets and bulk schedules route to the Bookroll pipeline; single ACORD forms go to standard New Business underwriting."
+model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="You are an expert document analyst. Do not give generic reasons. Explicitly state the visual structures (e.g., 'A 5-column grid with multiple vehicles indicates a schedule/bookroll' or 'A single ACORD 130 header indicates new business') that drove your classification."
 )
 
-uploaded_file = st.file_uploader(
-    "Upload Submission Document (JPEG / PNG)", 
-    type=["jpg", "jpeg", "png"]
-)
-
-if uploaded_file is not None:
+if "global_file_bytes" in st.session_state and st.session_state.global_file_bytes:
     col_img, col_data = st.columns([1, 1.2])
-    
     with col_img:
-        st.image(uploaded_file, caption="Inbound Document", use_column_width=True)
-        
+        st.image(st.session_state.global_file_bytes, caption="Active Payload", use_column_width=True)
     with col_data:
-        if st.button("🧠 Analyze Visual Case Intent", type="primary", use_container_width=True):
-            with st.spinner("Analyzing document layout and business context..."):
+        if st.button("🏢 Execute Intent Classification", type="primary", use_container_width=True):
+            with st.spinner("Performing deep structural analysis..."):
                 try:
-                    # Get raw file bytes
-                    file_bytes = uploaded_file.getvalue()
-                    
-                    response = model.generate_content(
-                        contents=[
-                            "Visually analyze this document and classify the case intent.",
-                            {"mime_type": uploaded_file.type, "data": file_bytes}
-                        ],
-                        generation_config=genai.GenerationConfig(
-                            response_mime_type="application/json",
-                            response_schema=CaseClassification,
-                            temperature=0.1
-                        )
+                    img_payload = {"mime_type": st.session_state.global_mime_type, "data": st.session_state.global_file_bytes}
+                    res = model.generate_content(
+                        contents=["Analyze document layout and explicitly explain the business intent.", img_payload],
+                        generation_config=genai.GenerationConfig(response_mime_type="application/json", response_schema=CaseClassification, temperature=0.1)
                     )
+                    data = CaseClassification.model_validate_json(res.text)
+                    st.session_state.node2_intent_data = res.text
                     
-                    # Validate JSON to Pydantic
-                    data = CaseClassification.model_validate_json(response.text)
+                    st.success(" Classification Complete")
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Intent", data.case_type.replace('_', ' '))
+                    c2.metric("Confidence", f"{data.confidence_score}%")
+                    c3.metric("Visible Policies", data.detected_policy_count)
                     
-                    # Display Results Dashboard
-                    if data.case_type == "ESCALATE_TO_HUMAN":
-                        st.error("⚠️ Case Flagged: Ambiguous Document - Escalate to Human")
-                    elif data.case_type == "BOOKROLL":
-                        st.success("📚 Case Classified: BOOKROLL (Bulk Processing Queue)")
-                    else:
-                        st.info("📄 Case Classified: NEW BUSINESS (Standard Queue)")
-                        
-                    st.divider()
+                    st.markdown("#### Deep Agent Reasoning")
+                    st.info(data.detailed_reasoning)
                     
-                    # Layout metrics
-                    m_col1, m_col2, m_col3 = st.columns(3)
-                    with m_col1:
-                        st.metric("Primary Intent", data.case_type.replace('_', ' '))
-                    with m_col2:
-                        st.metric("Confidence Score", f"{data.confidence_score}%")
-                    with m_col3:
-                        st.metric("Visible Policies", data.detected_policy_count)
-                    
-                    st.divider()
-                    st.markdown("#### Agent Visual Reasoning")
-                    st.write(data.reasoning)
-                    
-                    st.markdown("#### Key Layout Indicators Detected")
-                    st.write(data.key_indicators)
+                    st.markdown("#### Visual Clues Detected")
+                    st.warning(data.key_indicators)
                     
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
+else:
+    st.warning(" No document found in global memory.")
