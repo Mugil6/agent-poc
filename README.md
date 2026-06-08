@@ -91,3 +91,7 @@ agent-poc/
 AgentCore & MCP Migration: Transition from hardcoded simulated enrichment (Node 5) to live database queries using the Model Context Protocol (MCP) and AWS Bedrock.
 
 Asynchronous Processing: Move execution from Streamlit frontend loops to AWS EventBridge / Celery background workers.
+
+📜 License
+
+Copyright (c) 2026 Mugilan. All Rights Reserved.
