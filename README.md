@@ -1,52 +1,93 @@
-# 🛡️ Agentic AI: P&C Underwriting Operating System (PoC)
+🛡️ Enterprise P&C Underwriting OS
 
-This repository contains a Proof of Concept (PoC) for an **Enterprise Multi-Agent Underwriting Pipeline**. It automates the entire lifecycle from document ingestion and triage to risk assessment, premium rating, and broker dispatch.
+An asynchronous, multi-agent AI underwriting pipeline built with Streamlit and Google Gemini (3.1 Flash-Lite). This system orchestrates 10 specialized AI micro-agents using a Hierarchical Supervisor Pattern to process broker submissions, assess risk, generate actuarial pricing, and draft broker communications safely within API limits.
 
-Built with **Streamlit** and the **Native Gemini API**, this application demonstrates a decoupled micro-agent architecture. By separating tasks into standalone nodes passing data via global memory, it ensures modularity, fault tolerance, and enterprise-grade scalability.
+🏗️ Architecture Overview
 
-## 🏗️ The 3-Stage Pipeline (10 Agent Nodes)
+The pipeline transitions from a monolithic manual workflow to an automated Master Agent (Supervisor) architecture. It is divided into three core phases:
 
-### Stage 1: Intake & Triage
-1. **🔍 Node 1: Extractor:** Parses complex grids/tables into structured DataFrames.
-2. **🏢 Node 2: Classifier:** Analyzes visual structure to determine business intent (e.g., Bookroll vs. New Business).
-3. **📝 Node 3: Case Creator:** Synthesizes outputs into a clean CRM ticket.
-4. **📧 Node 4: Exception Agent:** Automatically drafts broker emails to request missing data.
+1️⃣ Intake Master (pages/📥_Intake_Master.py)
 
-### Stage 2: Quote & Assess
-5. **🌐 Node 5: Enrichment:** Fetches external geographical and compliance risk data.
-6. **🧮 Node 6: Rating:** Calculates premium based on hazard multipliers.
-7. **⚖️ Node 7: Summarization:** Provides an executive summary for human underwriting decision support.
-8. **📄 Node 8: Quote Prep:** Drafts the formal quote document and subjectivities.
+Orchestrates Nodes 1-4 to handle high-volume structural tasks.
 
-### Stage 3: Negotiate & Bind
-9. **📈 Node 9: Cross-Sell:** Runs predictive models to suggest logical upsell products.
-10. **✉️ Node 10: Issuance:** Synthesizes the quote and upsell opportunities into a final dispatch communication.
+Node 1 (Extractor): Parses deep tabular data (Policies, Limits, Carriers) from uploaded ACORD forms using JSON schemas.
 
-## 📂 Repository Structure
-```text
+Node 2 (Classifier): Visually determines business intent (e.g., Bookroll vs. New Business).
+
+Node 3 (Case Creator): Synthesizes extracted data into a structured CRM payload.
+
+Node 4 (Exception): Automatically drafts broker emails if mandatory data is missing.
+
+2️⃣ Assess Master (pages/📊_Assess_Master.py)
+
+Orchestrates Nodes 5-8 to handle high-risk reasoning and financial liability.
+
+Node 5 (Enrichment): Simulates fetching external geographic and compliance hazard data.
+
+Node 6 (Rating Engine): Applies actuarial reasoning to calculate base premiums and hazard multipliers.
+
+Node 7 (UW Summary): Synthesizes risk nuances into an Executive Decision Support summary.
+
+Node 8 (Quote Prep): Formats approved rating data into a formal, structured quote document.
+
+3️⃣ Bind Master (pages/🤝_Bind_Master.py)
+
+Orchestrates Nodes 9-10 to handle sales strategy and dispatch.
+
+Node 9 (Cross-Sell): Dynamically generates a portfolio of logical upsell products tailored to the exact risk profile.
+
+Node 10 (Issuance): Uses raw text generation to draft a persuasive, long-form dispatch email to the broker (bypassing JSON token limitations).
+
+🚀 Key Technical Features
+
+Pydantic Schema Enforcement: Guarantees structural integrity of LLM outputs for seamless data handoffs between agents.
+
+API Latency & Quota Pacing: Utilizes strategic time.sleep() injections between agent calls to prevent 429 Quota Exhausted errors on free-tier APIs (15 Requests Per Minute limit).
+
+Decoupled State Rendering: Separates AI execution logic from Streamlit UI rendering to prevent screen flashing and NoneType tracebacks.
+
+Hybrid Output Generation: Uses strict JSON mode for data extraction (Nodes 1-9) and Raw Text mode for long-form creative generation (Node 10) to prevent token truncation.
+
+🛠️ Setup & Installation
+
+1. Prerequisites
+
+Ensure you have Python 3.9+ installed.
+
+pip install streamlit google-generativeai pydantic pandas
+
+
+2. API Key Configuration
+
+Create a .streamlit folder in the root directory and add a secrets.toml file to securely store your Google Gemini API key.
+
+.streamlit/secrets.toml
+
+GEMINI_API_KEY = "your_google_ai_studio_api_key"
+
+
+3. Run the Application
+
+Launch the master gateway from your terminal:
+
+python -m streamlit run app.py
+
+
+📂 Project Structure
+
 agent-poc/
-├── app.py                              # Global Upload & Master Orchestrator
-├── pages/
-│   ├── 1_🔍_Structured_Extractor.py    
-│   ├── 2_🏢_Intent_Classifier.py       
-│   ├── 3_📝_Case_Creator.py            
-│   ├── 4_📧_Exception_Communicator.py  
-│   ├── 5_🌐_Enrichment_Agent.py        
-│   ├── 6_🧮_Rating_Agent.py            
-│   ├── 7_⚖️_Summarization_Agent.py     
-│   ├── 8_📄_Quote_Prep_Agent.py        
-│   ├── 9_📈_Cross_Sell_Agent.py        
-│   └── 10_✉️_Issuance_Agent.py         
 ├── .streamlit/
-│   └── secrets.toml                  # Stores GEMINI_API_KEY
-└── requirements.txt                  # Dependency manifest
+│   └── secrets.toml                    # API Keys (Do not commit to GitHub)
+├── app.py                              # Global Upload & Dashboard Overview
+├── pages/
+│   ├── 1_📥_Intake_Master.py           # Runs Nodes 1, 2, 3, 4 automatically
+│   ├── 2_📊_Assess_Master.py           # Runs Nodes 5, 6, 7, 8 automatically
+│   └── 3_🤝_Bind_Master.py             # Runs Nodes 9, 10 automatically
+└── README.md
 
- Local Development
 
-    Clone the repository and pip install -r requirements.txt.
+📝 Future Enterprise Upgrades (Roadmap)
 
-    Configure .streamlit/secrets.toml with your API Key.
+AgentCore & MCP Migration: Transition from hardcoded simulated enrichment (Node 5) to live database queries using the Model Context Protocol (MCP) and AWS Bedrock.
 
-    Run python -m streamlit run app.py. Upload a document to the Global Memory bank to execute the pipeline.
-
-   Copyright (c) 2026 [Mugilan]. All Rights Reserved.
+Asynchronous Processing: Move execution from Streamlit frontend loops to AWS EventBridge / Celery background workers.
