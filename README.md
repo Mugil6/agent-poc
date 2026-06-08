@@ -74,7 +74,7 @@ python -m streamlit run app.py
 
 
 📂 Project Structure
-
+```text
 agent-poc/
 ├── .streamlit/
 │   └── secrets.toml                    # API Keys (Do not commit to GitHub)
