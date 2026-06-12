@@ -29,6 +29,7 @@ Stage 3: Negotiate & Bind
 Agentic Focus: Executes predictive cross-sell/up-sell modeling and generates final outbound communications with an integrated HITL revision loop.
 
 📂 Repository Structure
+```text
 
 agent-poc/
 ├── app.py                # Global Gateway & Orchestrator
@@ -39,6 +40,8 @@ agent-poc/
 ├── .streamlit/
 │   └── secrets.toml      # Stores GEMINI_API_KEY
 └── requirements.txt
+
+```text
 
 
  Deployment Strategy
